@@ -1,12 +1,10 @@
 # -*- coding: UTF-8 -*-
 import random
-import time
 
-from mingus.containers import Note, NoteContainer, Bar, Track, Composition
-from mingus.midi import fluidsynth, midi_file_out
-import mingus.core.scales as scales
+from mingus.containers import Note, Bar, Track, Composition
+from mingus.midi import midi_file_out
 from mingus.containers import instrument
-
+from ElementaryCAEngine import Engine
 
 def format_block(i):
     return "|" + "".join([u'▋' if n else u"  " for n in i]) + "|"
@@ -14,44 +12,18 @@ def format_block(i):
 
 def trackgen(i, length, bars, octave, inst):
     # what it resets to
-    n = [False, False, False, False, False, False, False, False, False]
     track = Track(inst)
+
+    rule_number = 30
+    automata = Engine(rule_number)
+
     for b in range(0, (length * bars) / 4):
         bar = Bar("C", (4, 4))
         for t in range(0, 4):
-            for ind, s in enumerate(i):
-                x = ind - 1
-                y = ind
-                z = ind + 1
-                if ind == 0:
-                    x = len(i) - 1
-                else:
-                    z = 0
-                if i[x] and i[y] and i[z]:
-                    n[y] = False
-                    continue
-                if i[x] and i[y] and not i[z]:
-                    n[y] = True
-                    continue
-                if i[x] and not i[y] and i[z]:
-                    n[y] = False
-                    continue
-                if i[x] and not i[y] and not i[z]:
-                    n[y] = True
-                    continue
-                if not i[x] and i[y] and i[z]:
-                    n[y] = True
-                    continue
-                if not i[x] and i[y] and not i[z]:
-                    n[y] = False
-                    continue
-                if not i[x] and not i[y] and i[z]:
-                    n[y] = True
-                    continue
-                else:
-                    n[y] = False
-            i = n
-            n = [False, False, False, False, False, False, False, False, False]
+
+            automata.step()
+
+            i = automata.rows[-1]
             scale = ["C", "D", "E", "G", "A"]
 
             for index, d in enumerate(i):

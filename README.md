@@ -4,3 +4,9 @@
 
 
 Music generation using Cellular Automata.
+
+## install instructions:
+
+1. clone with git
+2. install dependencies
+    i. mingus - `sudo pip install mingus`
