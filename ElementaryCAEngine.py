@@ -18,6 +18,12 @@ def default_string_formatter(row, width=0):
     return out
 
 
+class EdgeType:  # (Enum)
+    INF = 0
+    LOOP = 1
+    BOUNDED = 2  # TODO: implement this
+
+
 class Engine(object):
 
     # I'm sure there's a clever programmatic way to generate these rules, but I'm
@@ -42,12 +48,13 @@ class Engine(object):
                 rules.append(cls.rules[i])
         return rules
 
-    def __init__(self, rule_number):  # TODO: add init rows and edge-type (inf, looped, out-of-boundary-state)
+    def __init__(self, rule_number, init_row=[False, True, False], edge_type=EdgeType.LOOP):
         self.rule_number = rule_number
         self.rule = self.get_rule(rule_number)
-        self.rows = [[True]]
+        self.rows = [init_row]
+        self.edge_type = edge_type
 
-    def step(self):
+    def __step_inf(self):
         next_row = []
         last_row = list(self.rows[-1])
         # Pad the row with two false values on each side. This allows us to more
@@ -66,6 +73,39 @@ class Engine(object):
             next_row.append(match)
         self.rows.append(next_row)
         return next_row
+
+    def __step_loop(self):
+        next_row = []
+        last_row = list(self.rows[-1])
+
+        if len(last_row) < 2:
+            raise AssertionError("looped rows must be at least 3 cells wide")
+
+        for index, value in enumerate(last_row):
+            # skip first and last values (because of the padding)
+            if index == 0:
+                # wrap boundary
+                upward_state = [last_row[-1], last_row[index], last_row[index+1]]
+            elif index == len(last_row) - 1:
+                # wrap boundary
+                upward_state = [last_row[index-1], last_row[index], last_row[0]]
+            else:
+                # no wrap needed
+                upward_state = last_row[index - 1 : index + 2]
+            match = upward_state in self.rule
+            next_row.append(match)
+        self.rows.append(next_row)
+        return next_row
+
+    def step(self):
+        if self.edge_type == EdgeType.INF:
+            self.__step_inf()
+        elif self.edge_type == EdgeType.LOOP:
+            self.__step_loop()
+        elif self.edge_type == EdgeType.BOUNDED:
+            raise NotImplementedError('bounded CA rule computation NYI')
+        else:
+            raise AttributeError('unknown edge type:', self.edge_type)
 
     def retrieve(self, number):
         return self.rows[number]

@@ -4,7 +4,7 @@ import random
 from mingus.containers import Note, Bar, Track, Composition
 from mingus.midi import midi_file_out
 from mingus.containers import instrument
-from ElementaryCAEngine import Engine
+from ElementaryCAEngine import Engine, EdgeType
 
 def format_block(i):
     return "|" + "".join([u'▋' if n else u"  " for n in i]) + "|"
@@ -15,7 +15,7 @@ def trackgen(i, length, bars, octave, inst):
     track = Track(inst)
 
     rule_number = 30
-    automata = Engine(rule_number)
+    automata = Engine(rule_number, init_row=i, edge_type=EdgeType.LOOP)
 
     for b in range(0, (length * bars) / 4):
         bar = Bar("C", (4, 4))
