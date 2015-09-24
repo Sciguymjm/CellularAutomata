@@ -5,8 +5,14 @@
 
 Music generation using Cellular Automata.
 
-## install instructions:
 
-1. clone with git
-2. install dependencies
-    i. mingus - `sudo pip install mingus`
+##Example (Rule 30)
+
+![Rule 30 Example](ex1.png)
+
+
+## Install Instructions:
+
+1. Clone with Git - `git clone https://github.com/Sciguymjm/CellularAutomata.git`
+2. Install dependencies
+    - mingus - `sudo pip install mingus`
