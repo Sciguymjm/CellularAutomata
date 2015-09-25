@@ -1,9 +1,11 @@
 # -*- coding: UTF-8 -*-
 import random
 
-from mingus.containers import Note, Bar, Track, Composition
+from mingus.containers import Note, Bar, Track, Composition, MidiInstrument, NoteContainer
+from mingus.containers.instrument import MidiPercussionInstrument
 from mingus.midi import midi_file_out
 from mingus.containers import instrument
+
 from ElementaryCAEngine import Engine, EdgeType
 from SongStructureGen import SongStructure, SongSection
 
@@ -12,8 +14,8 @@ def format_block(i):
     return "|" + "".join([u'▋' if n else u"  " for n in i]) + "|"
 
 
-def trackgen(i, length, bars, octave, inst, scale = ["C", "D", "E", "G", "A"]):
-    track = Track(inst)
+def trackgen(i, length, bars, octave, scale=["C", "D", "E", "G", "A"]):
+    track = Track()
 
     rule_number = 30
     automata = Engine(rule_number, init_row=i, edge_type=EdgeType.LOOP)
@@ -25,7 +27,6 @@ def trackgen(i, length, bars, octave, inst, scale = ["C", "D", "E", "G", "A"]):
             automata.step()
 
             i = automata.rows[-1]
-
 
             for index, d in enumerate(i):
                 if d and random.randrange(0, 6) == 1:
@@ -40,36 +41,40 @@ def trackgen(i, length, bars, octave, inst, scale = ["C", "D", "E", "G", "A"]):
         track.add_bar(bar)
     return track
 
-notes       = ['a', 'a#', 'b', 'c', 'c#', 'd', 'd#', 'e', 'f', 'f#', 'g', 'g#'] * 2
+
+notes = ['a', 'a#', 'b', 'c', 'c#', 'd', 'd#', 'e', 'f', 'f#', 'g', 'g#'] * 2
 notes = [note.upper() for note in notes]
-chroma      = lambda x: [ i for i in notes[ notes.index(x): ] + notes[ :notes.index(x) ] ] + [x]
-major       = lambda x: ( chroma(x)[:5] + [chroma(x)[5]] + chroma(x)[5:12] )[::2] + [x]
-major_penta = lambda x: [ i for idx, i in enumerate(major(x)) if idx not in (3, 6) ]
-minor_penta = lambda x: ( major_penta( notes[ notes.index(x) + 3 ])[:-1] * 2)[-6:]
+chroma = lambda x: [i for i in notes[notes.index(x):] + notes[:notes.index(x)]] + [x]
+major = lambda x: ( chroma(x)[:5] + [chroma(x)[5]] + chroma(x)[5:12] )[::2] + [x]
+major_penta = lambda x: [i for idx, i in enumerate(major(x)) if idx not in (3, 6)]
+minor_penta = lambda x: ( major_penta(notes[notes.index(x) + 3])[:-1] * 2)[-6:]
+
+
+
 
 # setup verse
-ini = [False]*9
+ini = [False] * 9
 ini[random.randrange(0, 8)] = True
-melody = instrument.MidiInstrument()
-melody.instrument_nr = 1
-verse = trackgen(ini, 8, 8, 4, melody, scale=major_penta('C'))
-
+# instrument in this function does not matter if you are combining generated tracks
+verse = trackgen(ini, 8, 8, 4, scale=major_penta('C'))
 # setup bridge
-ini = [False]*9
+ini = [False] * 9
 ini[random.randrange(0, 8)] = True
-melody = instrument.MidiInstrument()
-melody.instrument_nr = 1
-bridge = trackgen(ini, 8, 8, 4, melody, scale=major_penta('A'))
+bridge = trackgen(ini, 8, 8, 4, scale=major_penta('A'))
 
 # setup chorus
-ini = [False]*9
+ini = [False] * 9
 ini[random.randrange(0, 8)] = True
-melody = instrument.MidiInstrument()
-melody.instrument_nr = 1
-chorus = trackgen(ini, 8, 8, 4, melody, scale=major_penta('C'))
+chorus = trackgen(ini, 8, 8, 4, scale=major_penta('C'))
 
 song = Composition()
-trackmain = Track()
+
+# create the instrument for the main track
+melody = MidiInstrument()
+melody.instrument_nr = 1  # MIDI instrument number: http://www.midi.org/techspecs/gm1sound.php
+
+# here is where you set the actual instrument
+trackmain = Track(melody)
 
 song_sections = {
     SongSection.CHORUS: chorus,
@@ -85,6 +90,39 @@ for section in song_structure.sections:
 
 song.add_track(trackmain)
 
+bass = MidiInstrument()
+bass.instrument_nr = 38
+basstrack = Track(bass)
+
+for i in range(0, len(song_structure.sections) * 8):
+    b = Bar()
+    for i2 in range(0, 4):
+        n = Note("C", 3)
+        n.set_channel(2)
+        b.place_notes(n, 4)
+    basstrack.add_bar(b)
+
+song.add_track(basstrack)
+
+# set up example drums (basic beat) TODO: generate beat + fills
+drumtrack = Track(MidiPercussionInstrument())
+
+bd = MidiPercussionInstrument().bass_drum_1()  # parses name to "note" value (drum sound representation)
+bd.set_channel(9)  # required for drums
+sd = MidiPercussionInstrument().acoustic_snare()
+sd.set_channel(9)
+hh = MidiPercussionInstrument().closed_hi_hat()
+hh.set_channel(9)
+
+notes = [[hh, bd], [hh], [hh, sd], [hh]] * 2
+for i in range(0, len(song_structure.sections) * 8):
+    b = Bar()
+    for i2 in range(0, 8):
+        n = NoteContainer()
+        n.add_notes(notes[i2])
+        b.place_notes(n, 8)
+    drumtrack.add_bar(b)
+song.add_track(drumtrack)
 
 midi_file_out.write_Composition("song.mid", song)
 
@@ -92,21 +130,21 @@ midi_file_out.write_Composition("song.mid", song)
 
 
 # initial setup
-ini = [False]*9
+ini = [False] * 9
 
 ini[random.randrange(0, 8)] = True
 
 melody = instrument.MidiInstrument()
 melody.instrument_nr = 1
-track1 = trackgen(ini, 8, 19, 4, melody)
+track1 = trackgen(ini, 8, 19, 4)
 
-ini = [False]*9
+ini = [False] * 9
 
 ini[random.randrange(0, 8)] = True
 
 bass = instrument.MidiInstrument()
 bass.instrument_nr = 1
-track2 = trackgen(ini, 4, 19, 3, bass)
+track2 = trackgen(ini, 4, 19, 3)
 
 comp = Composition()
 
