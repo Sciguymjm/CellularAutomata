@@ -10,8 +10,7 @@ def format_block(i):
     return "|" + "".join([u'▋' if n else u"  " for n in i]) + "|"
 
 
-def trackgen(i, length, bars, octave, inst):
-    # what it resets to
+def trackgen(i, length, bars, octave, inst, scale = ["C", "D", "E", "G", "A"]):
     track = Track(inst)
 
     rule_number = 30
@@ -24,13 +23,13 @@ def trackgen(i, length, bars, octave, inst):
             automata.step()
 
             i = automata.rows[-1]
-            scale = ["C", "D", "E", "G", "A"]
+
 
             for index, d in enumerate(i):
-                if d and random.randrange(0, 6) == 3:
+                if d and random.randrange(0, 6) == 1:
                     bar.place_rest(length)
                     break
-                if d:
+                if index > 0 and d:
                     # strip off the top note for the melody
                     bar.place_notes(Note(list(reversed(scale))[index if index < 5 else index - 4],
                                          octave=octave if index < 5 else octave + 1), length)
@@ -38,6 +37,63 @@ def trackgen(i, length, bars, octave, inst):
             print format_block(i)
         track.add_bar(bar)
     return track
+
+notes       = ['a', 'a#', 'b', 'c', 'c#', 'd', 'd#', 'e', 'f', 'f#', 'g', 'g#'] * 2
+notes = [note.upper() for note in notes]
+chroma      = lambda x: [ i for i in notes[ notes.index(x): ] + notes[ :notes.index(x) ] ] + [x]
+major       = lambda x: ( chroma(x)[:5] + [chroma(x)[5]] + chroma(x)[5:12] )[::2] + [x]
+major_penta = lambda x: [ i for idx, i in enumerate(major(x)) if idx not in (3, 6) ]
+minor_penta = lambda x: ( major_penta( notes[ notes.index(x) + 3 ])[:-1] * 2)[-6:]
+
+
+
+ini = [
+    False,
+    False,
+    False,
+    False,
+    False,
+    False,
+    False,
+    False,
+    False]
+
+
+ini[random.randrange(0, 8)] = True
+
+
+melody = instrument.MidiInstrument()
+melody.instrument_nr = 1
+verse = trackgen(ini, 8, 8, 4, melody, scale=major_penta('C'))
+
+ini = [
+    False,
+    False,
+    False,
+    False,
+    False,
+    False,
+    False,
+    False,
+    False]
+
+ini[random.randrange(0, 8)] = True
+
+melody = instrument.MidiInstrument()
+melody.instrument_nr = 1
+bridge = trackgen(ini, 8, 8, 4, melody, scale=major_penta('A'))
+
+song = Composition()
+trackmain = Track()
+[trackmain.add_bar(bar) for bar in verse.bars + verse.bars + verse.bars + bridge.bars + verse.bars]
+
+song.add_track(trackmain)
+
+
+midi_file_out.write_Composition("song.mid", song)
+
+
+
 
 # initial setup
 ini = [
