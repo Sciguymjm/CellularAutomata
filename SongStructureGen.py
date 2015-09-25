@@ -43,7 +43,7 @@ class SongStructure(object):
         if len(starts_with) < 1:
             starting_choices = SongSection.list_all()
             starting_choices.remove(SongSection.END)
-            self.sections = [random.choice(starting_choices)] # start w/ any but END
+            self.sections = [SongSection.VERSE]  # start w/ verse, why not?
         else:
             self.sections = starts_with
 
@@ -68,11 +68,11 @@ class SongStructure(object):
         #   verse/verse/verse
 
         section_weights = [
-        #x=  CH V  B
-            [2, 4, 2],  # P(CH | x)
-            [4, 2, 3],  # P( V | x)
-            [2, 2, 1],  # P( B | x)
-            [3, 1, 2],  # P( E | x)
+        #x=  CH   V  B
+            [ 1, 40, 10],  # P(CH | x)
+            [40, 40, 10],  # P( V | x)
+            [10, 10,  1],  # P( B | x)
+            [30, 20,  1],  # P( E | x)
         ]
 
         p_sections = {
