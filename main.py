@@ -5,6 +5,7 @@ from mingus.containers import Note, Bar, Track, Composition
 from mingus.midi import midi_file_out
 from mingus.containers import instrument
 from ElementaryCAEngine import Engine, EdgeType
+from SongStructureGen import SongStructure, SongSection
 
 def format_block(i):
     return "|" + "".join([u'▋' if n else u"  " for n in i]) + "|"
@@ -45,8 +46,7 @@ major       = lambda x: ( chroma(x)[:5] + [chroma(x)[5]] + chroma(x)[5:12] )[::2
 major_penta = lambda x: [ i for idx, i in enumerate(major(x)) if idx not in (3, 6) ]
 minor_penta = lambda x: ( major_penta( notes[ notes.index(x) + 3 ])[:-1] * 2)[-6:]
 
-
-
+# setup verse
 ini = [
     False,
     False,
@@ -66,6 +66,7 @@ melody = instrument.MidiInstrument()
 melody.instrument_nr = 1
 verse = trackgen(ini, 8, 8, 4, melody, scale=major_penta('C'))
 
+# setup bridge
 ini = [
     False,
     False,
@@ -83,9 +84,38 @@ melody = instrument.MidiInstrument()
 melody.instrument_nr = 1
 bridge = trackgen(ini, 8, 8, 4, melody, scale=major_penta('A'))
 
+# setup chorus
+ini = [
+    False,
+    False,
+    False,
+    False,
+    False,
+    False,
+    False,
+    False,
+    False]
+
+ini[random.randrange(0, 8)] = True
+
+melody = instrument.MidiInstrument()
+melody.instrument_nr = 1
+chorus = trackgen(ini, 8, 8, 4, melody, scale=major_penta('C'))
+
 song = Composition()
 trackmain = Track()
-[trackmain.add_bar(bar) for bar in verse.bars + verse.bars + verse.bars + bridge.bars + verse.bars]
+
+song_sections = {
+    SongSection.CHORUS: chorus,
+    SongSection.VERSE: verse,
+    SongSection.BRIDGE: bridge,
+}
+song_structure = SongStructure(min_len=5)
+
+all_bars = []
+for section in song_structure.sections:
+    all_bars += song_sections[section]
+[trackmain.add_bar(bar) for bar in all_bars]
 
 song.add_track(trackmain)
 
@@ -134,6 +164,8 @@ comp = Composition()
 
 comp.add_track(track1)
 comp.add_track(track2)
+
+print 'generated song structure: ', song_structure.sections
 
 midi_file_out.write_Composition("comp.mid", comp)
 print "Wrote to file..."
