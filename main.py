@@ -7,6 +7,7 @@ from mingus.containers import instrument
 from ElementaryCAEngine import Engine, EdgeType
 from SongStructureGen import SongStructure, SongSection
 
+
 def format_block(i):
     return "|" + "".join([u'▋' if n else u"  " for n in i]) + "|"
 
@@ -47,57 +48,22 @@ major_penta = lambda x: [ i for idx, i in enumerate(major(x)) if idx not in (3, 
 minor_penta = lambda x: ( major_penta( notes[ notes.index(x) + 3 ])[:-1] * 2)[-6:]
 
 # setup verse
-ini = [
-    False,
-    False,
-    False,
-    False,
-    False,
-    False,
-    False,
-    False,
-    False]
-
-
+ini = [False]*9
 ini[random.randrange(0, 8)] = True
-
-
 melody = instrument.MidiInstrument()
 melody.instrument_nr = 1
 verse = trackgen(ini, 8, 8, 4, melody, scale=major_penta('C'))
 
 # setup bridge
-ini = [
-    False,
-    False,
-    False,
-    False,
-    False,
-    False,
-    False,
-    False,
-    False]
-
+ini = [False]*9
 ini[random.randrange(0, 8)] = True
-
 melody = instrument.MidiInstrument()
 melody.instrument_nr = 1
 bridge = trackgen(ini, 8, 8, 4, melody, scale=major_penta('A'))
 
 # setup chorus
-ini = [
-    False,
-    False,
-    False,
-    False,
-    False,
-    False,
-    False,
-    False,
-    False]
-
+ini = [False]*9
 ini[random.randrange(0, 8)] = True
-
 melody = instrument.MidiInstrument()
 melody.instrument_nr = 1
 chorus = trackgen(ini, 8, 8, 4, melody, scale=major_penta('C'))
@@ -126,16 +92,7 @@ midi_file_out.write_Composition("song.mid", song)
 
 
 # initial setup
-ini = [
-    False,
-    False,
-    False,
-    False,
-    False,
-    False,
-    False,
-    False,
-    False]
+ini = [False]*9
 
 ini[random.randrange(0, 8)] = True
 
@@ -143,16 +100,7 @@ melody = instrument.MidiInstrument()
 melody.instrument_nr = 1
 track1 = trackgen(ini, 8, 19, 4, melody)
 
-ini = [
-    False,
-    False,
-    False,
-    False,
-    False,
-    False,
-    False,
-    False,
-    False]
+ini = [False]*9
 
 ini[random.randrange(0, 8)] = True
 
