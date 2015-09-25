@@ -165,7 +165,7 @@ comp = Composition()
 comp.add_track(track1)
 comp.add_track(track2)
 
-print 'generated song structure: ', song_structure.sections
+print 'generated song structure: ', song_structure.get_sections_string()
 
 midi_file_out.write_Composition("comp.mid", comp)
 print "Wrote to file..."

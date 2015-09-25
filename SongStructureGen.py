@@ -8,9 +8,19 @@ class SongSection(object): # Enum
     BRIDGE = 2
     END = 3
 
+    enum_to_str_map = {
+        CHORUS: "C",
+        VERSE: "V",
+        BRIDGE: "B"
+    }
+
     @staticmethod
     def list_all():
         return [SongSection.CHORUS, SongSection.VERSE, SongSection.BRIDGE, SongSection.END]
+
+    @staticmethod
+    def to_string(section_type):
+        return SongSection.enum_to_str_map[section_type]
 
 
 class SongStructure(object):
@@ -18,6 +28,13 @@ class SongStructure(object):
     def __init__(self, min_len=1, max_len=99):
         self.sections = []
         self.generate(min_len, max_len)
+
+    def get_sections_string(self):
+        str = "|"
+        for section in self.sections:
+            str += SongSection.to_string(section)
+            str += "|"
+        return str
 
     def generate(self, min_len, max_len, starts_with=[]):
         # generates song with length between min_len & max_len distinct parts
@@ -42,6 +59,14 @@ class SongStructure(object):
 
     @staticmethod
     def _get_next_section(prev_sections):
+        # most popular (for modern popular music) should be:
+        #   Verse - Chorus - Verse - Chorus - Bridge - Chorus
+        # other popular ones:
+        #   verse/chorus/verse/chorus/solo/chorus
+        #   verse/lift/chorus/verse/lift/chorus/solo/lift/chorus
+        #   verse/verse/bridge/verse
+        #   verse/verse/verse
+
         section_weights = [
         #x=  CH V  B
             [2, 4, 2],  # P(CH | x)
