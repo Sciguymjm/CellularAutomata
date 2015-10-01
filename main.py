@@ -6,8 +6,8 @@ from mingus.containers.instrument import MidiPercussionInstrument
 from mingus.midi import midi_file_out
 from mingus.containers import instrument
 
-from ElementaryCAEngine import Engine, EdgeType
-from SongStructureGen import SongStructure, SongSection
+from cellular_musician.ElementaryCAEngine import Engine, EdgeType
+from cellular_musician.SongStructureGen import SongStructure, SongSection
 
 
 def format_block(i):

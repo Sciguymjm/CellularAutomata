@@ -16,3 +16,11 @@ Music generation using Cellular Automata.
 1. Clone with Git - `git clone https://github.com/Sciguymjm/CellularAutomata.git`
 2. Install dependencies
     - mingus - `sudo pip install mingus`
+
+### Developer Install ###
+
+additional setup steps for developers
+
+1. install additional dependencies:
+    * nose - `pip install nose`
+2. run tests to check your setup: (from project dir) `nosetests` - should result in "OK"
