@@ -66,31 +66,27 @@ class Track(object):
             while True:
                 #print 'search offset:' + str(offset)
                 still_looking = False  # flag to determine when we are out of value to search
-                try:
-                    if i[index-offset] and i[index+offset]:  # if both
-                        # choose random
-                        return random.choice([index-offset, index+offset])
-                except IndexError: 
-                    pass
-                try:
-                    if i[index-offset]:
-                        return index-offset
-                    still_looking = True  # this flag only set if underflow IndexError not caused
-                except IndexError:
-                    pass
-                try:
-                    if i[index+offset]:
-                        return index+offset
-                    still_looking = True  # this flag only set if overflow IndexError not caused
-                except IndexError:
-                    pass
-                
-                if not still_looking:
+
+                if index-offset>=0 and i[index-offset] and index+offset < len(i) and i[index+offset]:  # if both
+                    # choose random
+                    # print 'both'
+                    return random.choice([index-offset, index+offset])
+
+                elif index-offset >= 0 and i[index-offset]:  # if lower
+                    # print 'lower'
+                    return index-offset
+
+                elif index+offset < len(i) and i[index+offset]:  # if higher
+                    # print 'higher'
+                    return index+offset
+
+                elif index+offset > len(i) and index-offset <= 0:  # we're out of values
                     raise ValueError("CA has no True values")
+
                 else:
                     offset += 1
         else:
-            raise NotYetImplementedError("unknown note chooser:" + str(self.note_chooser))
+            raise NotImplementedError("unknown note chooser:" + str(self.note_chooser))
 
     def generate(self, length, bars, octave, scale=["C", "D", "E", "G", "A"], instrument=1, rand_length=False,
                  time_signature=(4, 4), velocity=[64, 64], channel=1, rests=True):
@@ -115,9 +111,7 @@ class Track(object):
             bar = Bar("C", time_signature)
             while bar.space_left() != 0:  # runs until we're out of space for notes (e.g. complete bar)
                 automata.step()  # take a step
-
                 index = self.get_chosen_note(index, automata.rows[-1])
-
                 if rand_length:  # if we're randomly generating lengths of notes
                     length = int(math.pow(2, random.randint(1, 4)))
                     left = bar.space_left()
