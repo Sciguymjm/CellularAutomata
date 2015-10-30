@@ -69,7 +69,7 @@ setup(
     # requirements files see:
     # https://packaging.python.org/en/latest/requirements.html
     install_requires=[
-        'mingus'
+        'mingus>=0.5.2'
     ],
 
     # List additional groups of dependencies here (e.g. development
