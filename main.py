@@ -104,9 +104,6 @@ track2.add_bar(b)
 song.add_track(track2)
 
 
-
-
-
 # END HARMONY #
 
 if False:
@@ -160,7 +157,7 @@ possible_fills = [
 for i in range(0, len(s.song_structure.sections)):
     notes = [[cc, bd], [hh], [hh, sd], [hh]] + \
             [[hh, bd], [hh, bd], [hh, sd], [hh], [hh, bd], [hh], [hh, sd], [hh]] * 3 + \
-            possible_fills[random.randint(0, len(possible_fills) - 1)]
+            random.choice(possible_fills)
     for num in range(0, BAR_NUMBER):
         b = Bar()
         for i2 in range(0, 8):

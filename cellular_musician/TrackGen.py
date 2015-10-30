@@ -10,12 +10,12 @@ from cellular_musician.ElementaryCAEngine import EdgeType
 
 
 class NoteChooser(object):
-    NEW_OLD_AVG = 0   #  '2:1 new:old avg'
-    TOP = 1           #  'top-most note'
-    BOTTOM = 2        #  'bottom-most note'
-    MEDIAN = 3        #  'median of all notes'
-    MIN_INTERVAL = 4  #  'minimize note intervals'
-
+    NEW_OLD_AVG = 0  # '2:1 new:old avg'
+    TOP = 1  # 'top-most note'
+    BOTTOM = 2  # 'bottom-most note'
+    MEDIAN = 3  # 'median of all notes'
+    MIN_INTERVAL = 4  # 'minimize note intervals'
+    MAX_INTERVAL = 5  # 'maximize note intervals'
 
 class Track(object):
     """
@@ -42,7 +42,7 @@ class Track(object):
         # returns chose note index given last chosen note index and row of CA states i
         if self.note_chooser == NoteChooser.NEW_OLD_AVG:
             return (index + 2 * int(round(median([ind for ind in range(0, len(i)) if i[ind] == True]),
-                                               0))) // 3  # average last value with this one and use as index
+                                          0))) // 3  # average last value with this one and use as index
 
         elif self.note_chooser == NoteChooser.TOP:
             for ind, val in enumerate(i):
@@ -52,19 +52,19 @@ class Track(object):
                 raise ValueError("CA has no True values")
 
         elif self.note_chooser == NoteChooser.BOTTOM:
-            for ind in reversed(range( 0, len(i))):
+            for ind in reversed(range(0, len(i))):
                 if i[ind]:
                     return ind
             else:  # if no values
                 raise ValueError("CA has no True values")
 
         elif self.note_chooser == NoteChooser.MEDIAN:
-            return int(round(median([ind for ind in range(0, len(i)) if i[ind] == True]),0))
+            return int(round(median([ind for ind in range(0, len(i)) if i[ind] == True]), 0))
 
         elif self.note_chooser == NoteChooser.MIN_INTERVAL:
             offset = 0
             while True:
-                #print 'search offset:' + str(offset)
+                # print 'search offset:' + str(offset)
                 still_looking = False  # flag to determine when we are out of value to search
 
                 if index-offset>=0 and i[index-offset] and index+offset < len(i) and i[index+offset]:  # if both
@@ -85,6 +85,22 @@ class Track(object):
 
                 else:
                     offset += 1
+
+        elif self.note_chooser == NoteChooser.MAX_INTERVAL:
+            offset_up = len(i) - 1 - index
+            offset_down = index
+            while True:
+                down = index - offset_down
+                up = index + offset_up
+                if i[down] and i[up]:
+                    return random.choice([down, up])
+                elif i[down] and not i[up]:
+                    return down
+                elif not i[down] and i[up]:
+                    return up
+                else:
+                    offset_down -= 1
+                    offset_up += 1
         else:
             raise NotImplementedError("unknown note chooser:" + str(self.note_chooser))
 
@@ -136,52 +152,9 @@ class Track(object):
         print "======="
         return self
 
-    # DEPRECATED, JUST FOR REFERENCE
-    def random_generate(self, bars, octave, time_signature=(4, 4), velocity=[64, 64]):
-        # Generates track in random key with random note lengths
-        scale = Util().major_penta(Util().notes[random.randint(0, len(Util().notes))])
-        length = 8
-        # create the instrument for the main track
-        instr = MidiInstrument()
-        instr.instrument_nr = random.randint(1,
-                                             104)  # MIDI instrument number: http://www.midi.org/techspecs/gm1sound.php
-        track = containers.Track(instr)
-        self.initial = [False] * 9
-        self.initial[random.randint(0, 8)] = True
-        rule_number = 30
-        automata = Engine(rule_number, init_row=self.initial, edge_type=EdgeType.LOOP)
-        for b in range(0, bars):
-            bar = Bar("C", time_signature)
-            while bar.space_left() != 0:
-                automata.step()
-
-                i = automata.rows[-1]
-                length = int(math.pow(2, random.randint(0, 4)))
-                if length > 16:
-                    print length
-                for index, d in enumerate(i):
-                    left = bar.space_left()
-                    space = ((left - (left % 0.25)) * 16) if left > 0.25 else left * 16
-                    if space < 16 / length:
-                        length = int(16.0 / space)
-                    if d and random.randint(0, 20) == 1:
-                        bar.place_rest(length)
-                        break
-                    if index > 0 and d:
-                        # strip off the top note for the melody
-                        n = Note(list(reversed(scale))[index if index < 5 else index - 4],
-                                 octave=octave if index < 5 else octave + 1)
-                        n.set_velocity(random.randint(velocity[0], velocity[1]))
-                        bar.place_notes(n, length)
-                        break
-                print Track.format_block(i)
-            track.add_bar(bar)
-        self.track = track
-        return self
-
     @staticmethod
     def format_block(i1):
-        return "|" + "".join([u'?' if n1 else u"  " for n1 in i1]) + "|"
+        return "|" + "".join([u'#' if n1 else u" " for n1 in i1]) + "|"
 
 
 class Util(object):
