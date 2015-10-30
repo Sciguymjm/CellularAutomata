@@ -9,6 +9,14 @@ from cellular_musician.ElementaryCAEngine import Engine
 from cellular_musician.ElementaryCAEngine import EdgeType
 
 
+class NoteChooser(object):
+    NEW_OLD_AVG = 0   #  '2:1 new:old avg'
+    TOP = 1           #  'top-most note'
+    BOTTOM = 2        #  'bottom-most note'
+    MEDIAN = 3        #  'median of all notes'
+    MIN_INTERVAL = 4  #  'minimize note intervals'
+
+
 class Track(object):
     """
         A track generating class. Possible name change due to conflict with mingus.containers.track.
@@ -17,16 +25,72 @@ class Track(object):
     initial = []
     instrument_nr = 0
     track = None
+    note_chooser = NoteChooser.NEW_OLD_AVG
 
-    def __init__(self, initial=[]):
+    def __init__(self, initial=[], note_chooser=NoteChooser.NEW_OLD_AVG):
         self.initial = initial
         self.track = containers.Track()
+        self.note_chooser = note_chooser
 
     def set_instrument(self, number):
         instr = MidiInstrument()
         instr.instrument_nr = number
         self.track.instrument = instr
         return instr
+
+    def get_chosen_note(self, index, i):
+        # returns chose note index given last chosen note index and row of CA states i
+        if self.note_chooser == NoteChooser.NEW_OLD_AVG:
+            return (index + 2 * int(round(median([ind for ind in range(0, len(i)) if i[ind] == True]),
+                                               0))) // 3  # average last value with this one and use as index
+
+        elif self.note_chooser == NoteChooser.TOP:
+            for ind, val in enumerate(i):
+                if val:
+                    return ind
+            else:  # if no values
+                raise ValueError("CA has no True values")
+
+        elif self.note_chooser == NoteChooser.BOTTOM:
+            for ind in reversed(range( 0, len(i))):
+                if i[ind]:
+                    return ind
+            else:  # if no values
+                raise ValueError("CA has no True values")
+
+        elif self.note_chooser == NoteChooser.MEDIAN:
+            return int(round(median([ind for ind in range(0, len(i)) if i[ind] == True]),0))
+
+        elif self.note_chooser == NoteChooser.MIN_INTERVAL:
+            offset = 0
+            while True:
+                print 'search offset:' + str(offset)
+                still_looking = False  # flag to determine when we are out of value to search
+                try:
+                    if i[index-offset] and i[index+offset]:  # if both
+                        # choose random
+                        return random.choice([index-offset, index+offset])
+                except IndexError: 
+                    pass
+                try:
+                    if i[index-offset]:
+                        return index-offset
+                    still_looking = True  # this flag only set if underflow IndexError not caused
+                except IndexError:
+                    pass
+                try:
+                    if i[index+offset]:
+                        return index+offset
+                    still_looking = True  # this flag only set if overflow IndexError not caused
+                except IndexError:
+                    pass
+                
+                if not still_looking:
+                    raise ValueError("CA has no True values")
+                else:
+                    offset += 1
+        else:
+            raise NotYetImplementedError("unknown note chooser:" + str(self.note_chooser))
 
     def generate(self, length, bars, octave, scale=["C", "D", "E", "G", "A"], instrument=1, rand_length=False,
                  time_signature=(4, 4), velocity=[64, 64], channel=1, rests=True):
@@ -51,9 +115,11 @@ class Track(object):
             bar = Bar("C", time_signature)
             while bar.space_left() != 0:  # runs until we're out of space for notes (e.g. complete bar)
                 automata.step()  # take a step
-                i = automata.rows[-1]
-                index = (index + 2 * int(round(median([ind for ind in range(0, len(i)) if i[ind] == True]),
-                                               0))) // 3  # average last value with this one and use as index
+
+                index = self.get_chosen_note(index, automata.rows[-1])
+                if index < 5:  # need this to avoid IndexError when using index later
+                    index = 5
+
                 if rand_length:  # if we're randomly generating lengths of notes
                     length = int(math.pow(2, random.randint(1, 4)))
                     left = bar.space_left()

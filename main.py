@@ -11,7 +11,7 @@ from mingus.containers.instrument import MidiPercussionInstrument
 from mingus.midi import midi_file_out
 
 from cellular_musician import SongGen
-from cellular_musician.TrackGen import Track, Util
+from cellular_musician.TrackGen import Track, Util, NoteChooser
 
 BAR_NUMBER = 4
 time_sig = (4, 4)
@@ -26,7 +26,8 @@ ini[random.randint(0, 8)] = True
 instr = 0
 vel = [70, 100]
 # instrument in this function does not matter if you are combining generated tracks
-verse = Track(ini).generate(16, BAR_NUMBER, 4, scale=scale1, rand_length=True, time_signature=time_sig,
+
+verse = Track(ini, NoteChooser.MIN_INTERVAL).generate(16, BAR_NUMBER, 4, scale=scale1, rand_length=True, time_signature=time_sig,
                             velocity=vel)
 
 # setup bridge
