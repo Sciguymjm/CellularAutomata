@@ -64,7 +64,7 @@ class Track(object):
         elif self.note_chooser == NoteChooser.MIN_INTERVAL:
             offset = 0
             while True:
-                print 'search offset:' + str(offset)
+                #print 'search offset:' + str(offset)
                 still_looking = False  # flag to determine when we are out of value to search
                 try:
                     if i[index-offset] and i[index+offset]:  # if both
@@ -117,8 +117,6 @@ class Track(object):
                 automata.step()  # take a step
 
                 index = self.get_chosen_note(index, automata.rows[-1])
-                if index < 5:  # need this to avoid IndexError when using index later
-                    index = 5
 
                 if rand_length:  # if we're randomly generating lengths of notes
                     length = int(math.pow(2, random.randint(1, 4)))
