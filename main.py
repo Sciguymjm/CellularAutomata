@@ -15,9 +15,10 @@ from cellular_musician.TrackGen import Track, Util
 
 BAR_NUMBER = 4
 time_sig = (4, 4)
-
-# BEGIN MELODY #
 util = Util()
+scale1 = util.major_penta('C')
+scale2 = util.major_penta('A')
+# BEGIN MELODY #
 # setup verse
 ini = [False] * 9
 ini[random.randint(0, 8)] = True
@@ -25,19 +26,19 @@ ini[random.randint(0, 8)] = True
 instr = 0
 vel = [70, 100]
 # instrument in this function does not matter if you are combining generated tracks
-verse = Track(ini).generate(16, BAR_NUMBER, 4, scale=util.major_penta('C'), rand_length=True, time_signature=time_sig,
+verse = Track(ini).generate(16, BAR_NUMBER, 4, scale=scale1, rand_length=True, time_signature=time_sig,
                             velocity=vel)
 
 # setup bridge
 ini = [False] * 9
 ini[random.randint(0, 8)] = True
-bridge = Track(ini).generate(8, BAR_NUMBER, 4, scale=util.major_penta('A'), rand_length=True, time_signature=time_sig,
+bridge = Track(ini).generate(8, BAR_NUMBER, 4, scale=scale2, rand_length=True, time_signature=time_sig,
                              velocity=vel)
 
 # setup chorus
 ini = [False] * 9
 ini[random.randint(0, 8)] = True
-chorus = Track(ini).generate(8, BAR_NUMBER, 4, scale=util.major_penta('C'), rand_length=True, time_signature=time_sig,
+chorus = Track(ini).generate(8, BAR_NUMBER, 4, scale=scale1, rand_length=True, time_signature=time_sig,
                              velocity=vel)
 
 song = Composition()
@@ -50,13 +51,20 @@ print "Melody instrument: " + trackmain.set_instrument(instr).names[instr] + " (
 s = SongGen.Song()
 trackmain = s.generate(chorus, verse, bridge, trackmain.track)
 
+# LAST BAR
+b = Bar()
+n = Note('C', 4)
+n.set_channel(1)
+b.place_notes(n, 4)
+
+trackmain.add_bar(b)
 song.add_track(trackmain)
 
 # END MELODY #
 
 
 # BEGIN HARMONY #
-util = Util()
+
 # setup verse
 ini = [False] * 5
 ini[random.randint(0, 4)] = True
@@ -64,20 +72,21 @@ ini[random.randint(0, 4)] = True
 instr = 33
 vel = [32, 48]
 channel = 2
+
 # instrument in this function does not matter if you are combining generated tracks
-verse = Track(ini).generate(2, BAR_NUMBER * 2, 2, scale=util.major_penta('C'), time_signature=time_sig, velocity=vel,
+verse = Track(ini).generate(2, BAR_NUMBER * 2, 2, scale=scale1, time_signature=time_sig, velocity=vel,
                             channel=channel, rests=False)
 
 # setup bridge
 ini = [False] * 5
 ini[random.randint(0, 4)] = True
-bridge = Track(ini).generate(2, BAR_NUMBER * 2, 2, scale=util.major_penta('A'), time_signature=time_sig, velocity=vel,
+bridge = Track(ini).generate(2, BAR_NUMBER * 2, 2, scale=scale2, time_signature=time_sig, velocity=vel,
                              channel=channel, rests=False)
 
 # setup chorus
 ini = [False] * 5
 ini[random.randint(0, 4)] = True
-chorus = Track(ini).generate(2, BAR_NUMBER * 2, 2, scale=util.major_penta('C'), time_signature=time_sig, velocity=vel,
+chorus = Track(ini).generate(2, BAR_NUMBER * 2, 2, scale=scale1, time_signature=time_sig, velocity=vel,
                              channel=channel, rests=False)
 
 track2 = Track()
@@ -85,7 +94,12 @@ track2 = Track()
 
 print "Harmony instrument: " + track2.set_instrument(instr).names[instr] + " ({})".format(instr)
 track2 = s.generate(chorus, verse, bridge, track2.track)
+b = Bar()
+n = Note('C', 2)
+n.set_channel(2)
+b.place_notes(n, 4)
 
+track2.add_bar(b)
 song.add_track(track2)
 
 
@@ -138,7 +152,8 @@ possible_fills = [
     [[sd], [sd], [sd], [sd]],
     [[hh, bd], [hh, sd], [hh, bd], [hh, sd]],
     [[bd], [sd], [bd], [sd]],
-    [[bd, sd], [bd, sd], [bd, sd], [bd, sd]]
+    [[bd, sd], [bd, sd], [bd, sd], [bd, sd]],
+    [[hh], [hh], [hh, bd], [hh, sd]]
 ]
 
 for i in range(0, len(s.song_structure.sections)):
@@ -152,6 +167,11 @@ for i in range(0, len(s.song_structure.sections)):
             n.add_notes(notes[num * 8 + i2])
             b.place_notes(n, 8)
         drumtrack.add_bar(b)
+
+b = Bar()
+b.place_notes([cc, bd], 4)
+
+drumtrack.add_bar(b)
 song.add_track(drumtrack)
 
 midi_file_out.write_Composition("song.mid", song, bpm=random.randint(8, 14) * 10)

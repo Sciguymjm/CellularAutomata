@@ -52,24 +52,24 @@ class Track(object):
             while bar.space_left() != 0:  # runs until we're out of space for notes (e.g. complete bar)
                 automata.step()  # take a step
                 i = automata.rows[-1]
-                index = (index + int(round(median([ind for ind in range(0, len(i)) if i[ind] == True]),
-                                           0))) // 2  # average last value with this one and use as index
+                index = (index + 2 * int(round(median([ind for ind in range(0, len(i)) if i[ind] == True]),
+                                               0))) // 3  # average last value with this one and use as index
                 if rand_length:  # if we're randomly generating lengths of notes
                     length = int(math.pow(2, random.randint(1, 4)))
                     left = bar.space_left()
-                    space = ((left - (left % 0.25)) * 16) if left > 0.25 else left * 16
+                    space = (
+                        (left - (left % 0.25)) * 16) if left > 0.25 else left * 16  # checks if we have enough space
                     if space < 16 / length:
                         length = int(16.0 / space)
                 if rests and random.randint(0, 20) == 1:  # same rest generation
                     bar.place_rest(16)
                     continue  # skip the rest
-                # strip off the top note for the melody
                 name = list(scale)[index if index < 5 else index - 4]  # can be used for diagnostics
                 counts[index] += 1
                 n = Note(name,
                          octave=octave if index < 5 else octave + 1)
                 n.set_velocity(random.randint(velocity[0], velocity[1]))  # random velocity, can feel more "real"
-                n.set_channel(channel) # if we want > 1 instruments we need > 1 channel
+                n.set_channel(channel)  # if we want > 1 instruments we need > 1 channel
                 bar.place_notes(n, length)
             track.add_bar(bar)  # add bar to track
         self.track = track  # set our track object to the newly generated track
