@@ -3,12 +3,12 @@
 [![Join the chat at https://gitter.im/Sciguymjm/CellularAutomata](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/Sciguymjm/CellularAutomata?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 
-Music generation using Cellular Automata.
+Music generation using elementary Cellular Automata.
 
 
 ##Example (Rule 30)
 
-![Rule 30 Example](ex1.png)
+![Rule 30 Example](song-1.png)
 
 
 ## Install Instructions:
@@ -19,7 +19,7 @@ Music generation using Cellular Automata.
 
 ### Developer Install ###
 
-additional setup steps for developers
+Additional setup steps for developers:
 
 1. install additional dependencies:
     * nose - `pip install nose`

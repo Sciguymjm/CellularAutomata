@@ -79,7 +79,7 @@ class Engine(object):
         last_row = list(self.rows[-1])
 
         if len(last_row) < 2:
-            raise AssertionError("looped rows must be at least 3 cells wide")
+            raise AssertionError("Bounded rows must be at least 3 cells wide")
 
         for index, value in enumerate(last_row):
             # skip first and last values (because of the padding)
@@ -97,13 +97,33 @@ class Engine(object):
         self.rows.append(next_row)
         return next_row
 
+    def __step_bound(self):
+        next_row = []
+        last_row = list(self.rows[-1])
+        for index, value in enumerate(last_row):
+            # skip first and last values (because of the padding)
+            if index == 0:
+                # end left side
+                upward_state = [0, last_row[index], last_row[index+1]]
+            elif index == len(last_row) - 1:
+                # end right side
+                upward_state = [last_row[index-1], last_row[index], 0]
+            else:
+                # no wrap needed
+                upward_state = last_row[index - 1 : index + 2]
+            match = upward_state in self.rule
+            next_row.append(match)
+        self.rows.append(next_row)
+        return next_row
+
+
     def step(self):
         if self.edge_type == EdgeType.INF:
             self.__step_inf()
         elif self.edge_type == EdgeType.LOOP:
             self.__step_loop()
         elif self.edge_type == EdgeType.BOUNDED:
-            raise NotImplementedError('bounded CA rule computation NYI')
+            self.__step_bound()
         else:
             raise AttributeError('unknown edge type:', self.edge_type)
 

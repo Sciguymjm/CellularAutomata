@@ -9,9 +9,52 @@ from mingus.containers import Note, Bar, Composition, MidiInstrument, NoteContai
 from mingus.containers.instrument import MidiPercussionInstrument
 
 from mingus.midi import midi_file_out
+import numpy
+import operator
 
 from cellular_musician import SongGen
 from cellular_musician.TrackGen import Track, Util, NoteChooser
+
+# VARIETY TESTS #
+BAR_NUMBER = 4
+time_sig = (4, 4)
+util = Util()
+scale1 = util.major_penta('C')
+scale2 = util.major_penta('A')
+# BEGIN MELODY #
+# setup verse
+rules = dict((n, 0) for n in range(0, 255))
+num = 10
+for x in range(0, num):
+    for rule in range(0, 255):
+        ini = [False] * 9
+        ini[random.randint(0, 8)] = True
+        # instr = random.randint(1, 104)
+        instr = 0
+        vel = [70, 100]
+        # instrument in this function does not matter if you are combining generated tracks
+        try:
+            verse = Track(ini, NoteChooser.MIN_INTERVAL).generate(16, BAR_NUMBER, 4, scale=scale1, rand_length=True, time_signature=time_sig,
+                                        velocity=vel, rule_number=rule)
+            rules[rule] += numpy.std(verse.notes)
+        except:
+            continue
+
+
+for r, std in sorted(rules.items(), key=operator.itemgetter(1), reverse=True):
+    if std > 0:
+        print "Rule:", r, "St.Dev:", std / num
+
+
+
+
+
+
+
+
+
+
+
 
 BAR_NUMBER = 4
 time_sig = (4, 4)
@@ -175,8 +218,9 @@ song.add_track(drumtrack)
 midi_file_out.write_Composition("song.mid", song, bpm=random.randint(8, 14) * 10)
 print "Wrote to file..."
 
+output = False
 MUSESCORE_PATH = 'D:\\Program Files (x86)\\MuseScore 2\\bin\\MuseScore.exe'  # Bad environment detection
-if os.path.isfile(MUSESCORE_PATH):
+if os.path.isfile(MUSESCORE_PATH) and output:
     subprocess.Popen("taskkill /F /IM WWAHost.exe").communicate()  # Kill music app, wait until done
     subprocess.Popen("taskkill /F /IM MuseScore.exe").communicate()  # Kill musescore
     call = '"' + MUSESCORE_PATH + '" ' + '-o "song.mp3" song.mid'  # Convert midi to mp3 using musescore

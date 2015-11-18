@@ -17,6 +17,7 @@ class NoteChooser(object):
     MIN_INTERVAL = 4  # 'minimize note intervals'
     MAX_INTERVAL = 5  # 'maximize note intervals'
 
+
 class Track(object):
     """
         A track generating class. Possible name change due to conflict with mingus.containers.track.
@@ -26,6 +27,8 @@ class Track(object):
     instrument_nr = 0
     track = None
     note_chooser = NoteChooser.NEW_OLD_AVG
+    counts = []
+    notes = []
 
     def __init__(self, initial=[], note_chooser=NoteChooser.NEW_OLD_AVG):
         self.initial = initial
@@ -67,20 +70,21 @@ class Track(object):
                 # print 'search offset:' + str(offset)
                 still_looking = False  # flag to determine when we are out of value to search
 
-                if index-offset>=0 and i[index-offset] and index+offset < len(i) and i[index+offset]:  # if both
+                if index - offset >= 0 and i[index - offset] and index + offset < len(i) and i[
+                            index + offset]:  # if both
                     # choose random
                     # print 'both'
-                    return random.choice([index-offset, index+offset])
+                    return random.choice([index - offset, index + offset])
 
-                elif index-offset >= 0 and i[index-offset]:  # if lower
+                elif index - offset >= 0 and i[index - offset]:  # if lower
                     # print 'lower'
-                    return index-offset
+                    return index - offset
 
-                elif index+offset < len(i) and i[index+offset]:  # if higher
+                elif index + offset < len(i) and i[index + offset]:  # if higher
                     # print 'higher'
-                    return index+offset
+                    return index + offset
 
-                elif index+offset > len(i) and index-offset <= 0:  # we're out of values
+                elif index + offset > len(i) and index - offset <= 0:  # we're out of values
                     raise ValueError("CA has no True values")
 
                 else:
@@ -105,7 +109,7 @@ class Track(object):
             raise NotImplementedError("unknown note chooser:" + str(self.note_chooser))
 
     def generate(self, length, bars, octave, scale=["C", "D", "E", "G", "A"], instrument=1, rand_length=False,
-                 time_signature=(4, 4), velocity=[64, 64], channel=1, rests=True):
+                 time_signature=(4, 4), velocity=[64, 64], channel=1, rests=True, rule_number=30):
         # create the instrument for the main track
         instr = MidiInstrument()
         instr.instrument_nr = instrument  # MIDI instrument number: http://www.midi.org/techspecs/gm1sound.php
@@ -114,14 +118,14 @@ class Track(object):
         if not self.initial:
             self.initial = [False] * 9
             print "Error: initial set empty. Defaulting..."
-        rule_number = 30
+
         if rand_length:  # start with quarter note as base
             length = 4
 
         automata = Engine(rule_number, init_row=self.initial, edge_type=EdgeType.LOOP)
 
         # Index counting for diagnostics
-        counts = dict((n, 0) for n in range(0, len(scale) * 2))
+        self.counts = dict((n, 0) for n in range(0, len(scale) * 2))
         index = 5  # starting value
         for b in range(0, (length * bars) / 4):
             bar = Bar("C", time_signature)
@@ -139,17 +143,19 @@ class Track(object):
                     bar.place_rest(16)
                     continue  # skip the rest
                 name = list(scale)[index if index < 5 else index - 4]  # can be used for diagnostics
-                counts[index] += 1
+                self.counts[index] += 1  # add to count data
+                self.notes.append(index)
                 n = Note(name,
                          octave=octave if index < 5 else octave + 1)
                 n.set_velocity(random.randint(velocity[0], velocity[1]))  # random velocity, can feel more "real"
                 n.set_channel(channel)  # if we want > 1 instruments we need > 1 channel
                 bar.place_notes(n, length)
+                # print self.format_block(automata.rows[-1])
             track.add_bar(bar)  # add bar to track
         self.track = track  # set our track object to the newly generated track
-        for n in counts:
-            print str(n) + ": " + str(counts[n])  # diagnostics
-        print "======="
+        # for n in self.counts:
+        #     print str(n) + ": " + str(self.counts[n])  # diagnostics
+        # print "======="
         return self
 
     @staticmethod
